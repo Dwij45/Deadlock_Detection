@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deadlock Detection System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+
+
+    <style>
+        :root {
+            --primary-color: #2ae870;
+            --secondary-color: #4ae485;
+            --bg-dark: #050e17;
+            --bg-light: #f5f9fc;
+            --container-dark: #0e1a25;
+            --container-light: #ffffff;
+            --text-dark: #ffffff;
+            --text-light: #333333;
+            --matrix-dark: #0f1f2e;
+            --matrix-light: #e9f2f9;
+            --step-dark: #101e2c;
+            --step-light: #e5eef5;
+            --border-dark: #51f08b;
+            --border-light: #4ae485;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.5s ease-in-out;
+        }
+
+        body.dark-mode {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        body.light-mode {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: transparent;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(13deg);
+        }
+
+        h1, h2, h3 {
+            transition: color 0.3s ease;
+        }
+
+        .dark-mode h1, .dark-mode h2, .dark-mode h3 {
+            color: var(--primary-color);
+        }
+
+        .light-mode h1, .light-mode h2, .light-mode h3 {
+            color: #2c8a56;
+        }
+
+        .container {
+            transition: all 0.5s ease;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .dark-mode .container {
+            background-color: var(--container-dark);
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .light-mode .container {
+            background-color: var(--container-light);
+            border-top: 4px solid var(--secondary-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideInRight {
+            0% { opacity: 0; transform: translateX(50px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInLeft {
+            0% { opacity: 0; transform: translateX(-50px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        label {
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .dark-mode label {
+            color: #828b94;
+        }
+
+        .light-mode label {
+            color: #4a5568;
+        }
+
+        input[type="number"] {
+            border-radius: 6px;
+            padding: 8px;
+            width: 80px;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode input[type="number"] {
+            background-color: var(--bg-dark);
+            color: white;
+            border: 1px solid var(--primary-color);
+        }
+
+        .light-mode input[type="number"] {
+            background-color: #f8fafc;
+            color: #333;
+            border: 1px solid #2c8a56;
+        }
+
+        button {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.6s;
+        }
+
+        button:hover:before {
+            left: 100%;
+        }
+
+        .dark-mode button {
+            background-color: var(--primary-color);
+            color: var(--bg-dark);
+        }
+
+        .light-mode button {
+            background-color: #2c8a56;
+            color: white;
+        }
+
+        .dark-mode button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .light-mode button:hover {
+            background-color: #36ab6c;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 15px;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+            transition: all 0.3s ease;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode th, .dark-mode td {
+            border: 1px solid var(--border-dark);
+        }
+
+        .light-mode th, .light-mode td {
+            border: 1px solid var(--border-light);
+        }
+
+        .dark-mode th {
+            background-color: var(--primary-color);
+            color: var(--bg-dark);
+        }
+
+        .light-mode th {
+            background-color: #2c8a56;
+            color: white;
+        }
+
+        .matrix-container {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .matrix-container {
+            background-color: var(--matrix-dark);
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .light-mode .matrix-container {
+            background-color: var(--matrix-light);
+            border-left: 5px solid var(--secondary-color);
+        }
+
+        .step {
+            padding: 15px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .dark-mode .step {
+            background-color: var(--step-dark);
+            border-left: 5px solid #828b94;
+        }
+
+        .light-mode .step {
+            background-color: var(--step-light);
+            border-left: 5px solid #4a5568;
+        }
+
+        .result {
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .result.safe {
+            background-color: rgba(104, 247, 155, 0.1);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .light-mode .result.safe {
+            background-color: rgba(44, 138, 86, 0.1);
+            border: 1px solid #2c8a56;
+            color: #2c8a56;
+        }
+
+        .dark-mode .result.deadlock {
+            background-color: rgba(255, 77, 109, 0.1);
+            border: 1px solid #ff4d6d;
+            color: #ff4d6d;
+        }
+
+        .light-mode .result.deadlock {
+            background-color: rgba(220, 38, 38, 0.1);
+            border: 1px solid #dc2626;
+            color: #dc2626;
+        }
+
+        .sequence {
+            font-family: monospace;
+            font-size: 18px;
+            margin: 15px 0;
+        }
+
+        .process-id {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .process-id {
+            background-color: var(--primary-color);
+            color: var(--bg-dark);
+        }
+
+        .light-mode .process-id {
+            background-color: #2c8a56;
+            color: white;
+        }
+
+        .section-title {
+            position: relative;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .section-title:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            transition: background-color 0.3s ease;
+        }
+
+        .dark-mode .section-title:after {
+            background-color: var(--primary-color);
+        }
+
+        .light-mode .section-title:after {
+            background-color: #2c8a56;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .sidebar {
+            border-radius: 8px;
+            padding: 20px;
+            height: 100%;
+            transition: all 0.5s ease;
+            animation: slideInRight 0.8s ease-out;
+        }
+
+        .dark-mode .sidebar {
+            background-color: var(--matrix-dark);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .light-mode .sidebar {
+            background-color: var(--matrix-light);
+            border-left: 3px solid var(--secondary-color);
+        }
+
+        .info-card {
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .info-card {
+            background-color: var(--container-dark);
+            border-top: 3px solid var(--primary-color);
+        }
+
+        .light-mode .info-card {
+            background-color: var(--container-light);
+            border-top: 3px solid var(--secondary-color);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .info-icon {
+            color: var(--primary-color);
+        }
+
+        .light-mode .info-icon {
+            color: #2c8a56;
+        }
+
+        .algorithm-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .algorithm-step {
+            background-color: var(--step-dark);
+        }
+
+        .light-mode .algorithm-step {
+            background-color: var(--step-light);
+        }
+
+        .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .step-number {
+            background-color: var(--primary-color);
+            color: var(--bg-dark);
+        }
+
+        .light-mode .step-number {
+            background-color: #2c8a56;
+            color: white;
+        }
+
+        .resolution-strategies {
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .dark-mode .resolution-strategies {
+            background-color: rgba(104, 247, 155, 0.05);
+            border: 1px solid var(--primary-color);
+        }
+
+        .light-mode .resolution-strategies {
+            background-color: rgba(44, 138, 86, 0.05);
+            border: 1px solid #2c8a56;
+        }
+
+        .strategy {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .strategy {
+            background-color: var(--step-dark);
+        }
+
+        .light-mode .strategy {
+            background-color: var(--step-light);
+        }
+
+        .strategy:hover {
+            transform: translateY(-5px);
+        }
+
+        .strategy-icon {
+            font-size: 20px;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .strategy-icon {
+            color: var(--primary-color);
+        }
+
+        .light-mode .strategy-icon {
+            color: #2c8a56;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: rotate 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        .nav-pill {
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            display: inline-block;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .nav-pill {
+            background-color: var(--step-dark);
+            color: var(--text-dark);
+        }
+
+        .light-mode .nav-pill {
+            background-color: var(--step-light);
+            color: var(--text-light);
+        }
+
+        .nav-pill.active {
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode .nav-pill.active {
+            background-color: var(--primary-color);
+            color: var(--bg-dark);
+        }
+
+        .light-mode .nav-pill.active {
+            background-color: #2c8a56;
+            color: white;
+        }
+        #space {
+            height: 20px;
+        }
+    </style>
+</head>
+
+
+<body class="dark-mode flex flex-col items-center justify-center min-h-screen">
+
+    <div id="space"></div>
+
+    <button id="theme-toggle" class="theme-toggle">
+        <i class="fas fa-sun"></i>
+        <!-- <i class="bi bi-brightness-alt-low-fill"></i> -->
+    </button>
+
+    <div class="container text-center p-5">
+        <h1 class="text-4xl font-bold mb-4">Deadlock Detection System</h1>
+        <p class="text-lg mt-3">Detect and resolve deadlocks using the Banker's Algorithm</p>
+        <button id="start-btn" class="mt-4">
+            <i class="fas fa-play mr-2"></i> Start Detection
+        </button>
+    </div>
+    
+    <div id="detection-section" class="container mt-5 hidden">
+        <h2 class="section-title">System Configuration</h2>
+        <div class="flex flex-wrap">
+            <div class="w-full md:w-2/3 mb-4">
+                <div class="mb-3">
+                    <label>Number of Processes:</label>
+                    <input type="number" id="num-processes" class="form-control w-25 d-inline" min="1" max="10" value="3">
+                </div>
+                <div class="mb-3">
+                    <label>Number of Resource Types:</label>
+                    <input type="number" id="num-resources" class="form-control w-25 d-inline" min="1" max="10" value="3">
+                </div>
+                <button id="create-matrices">
+                    <i class="fas fa-table mr-2"></i> Create Matrices
+                </button>
+            </div>
+            <div class="w-full md:w-1/3">
+                <div class="sidebar">
+                    <h3 class="mb-3">Banker's Algorithm</h3>
+                    <div class="algorithm-step">
+                        <div class="step-number">1</div>
+                        <div>Define system state with matrices</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">2</div>
+                        <div>Check if resources can be allocated</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">3</div>
+                        <div>Find safe execution sequence</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">4</div>
+                        <div>Identify deadlocked processes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="matrices-container" class="container hidden">
+        <h2 class="section-title">Resource Matrices</h2>
+        <div class="box">
+            <div class="w-full">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Allocation Matrix</h3>
+                    <p class="mb-4">Enter the number of instances of each resource type currently allocated to each process.</p>
+                    <div class="matrix-container">
+                        <table id="allocation-matrix"></table>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Request Matrix</h3>
+                    <p class="mb-4">Enter the number of instances of each resource type that each process may still request.</p>
+                    <div class="matrix-container">
+                        <table id="request-matrix"></table>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Available Resources</h3>
+                    <p class="mb-4">Enter the number of available instances for each resource type.</p>
+                    <div class="matrix-container">
+                        <table id="available-matrix"></table>
+                    </div>
+                </div>
+                
+                <button id="detect-deadlock">
+                    <i class="fas fa-search mr-2"></i> Detect Deadlock
+                </button>
+            </div>
+            
+            <!-- <div class="w-full md:w-1/3">
+                <div class="sidebar">
+                    <h3 class="mb-4">Resource Management Tips</h3>
+                    <div class="info-card">
+                        <div class="info-icon"><i class="fas fa-info-circle"></i></div>
+                        <h4>Allocation Matrix</h4>
+                        <p>Shows resources currently held by each process</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon"><i class="fas fa-question-circle"></i></div>
+                        <h4>Request Matrix</h4>
+                        <p>Shows resources that may be requested in the future</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon"><i class="fas fa-check-circle"></i></div>
+                        <h4>Available Resources</h4>
+                        <p>Shows free resources that can be allocated</p>
+                    </div>
+                    <div>
+                        <img src="\deadlock_DM\assets\img.png" alt="Resource Management" class="w-full rounded-lg shadow-lg">
+                    </div>
+                </div> -->
+            </div>
+        </div>
+    <!-- </div> -->
+
+    <div id="results-container" class="container hidden">
+        <h2 class="section-title">Analysis Results</h2>
+        <div id="deadlock-result"></div>
+        <div id="execution-steps"></div>
+        
+        <div id="deadlock-resolution" class="hidden">
+            <h3 class="text-xl font-semibold mt-5 mb-3">Deadlock Resolution Strategies</h3>
+            <div class="resolution-strategies">
+                <div class="nav-pills mb-4">
+                    <span class="nav-pill active" data-strategy="prevention">Prevention</span>
+                    <span class="nav-pill" data-strategy="avoidance">Avoidance</span>
+                    <span class="nav-pill" data-strategy="detection">Detection & Recovery</span>
+                </div>
+                
+                <div id="strategy-content">
+                    <!-- Prevention strategies -->
+                    <div class="strategy-section" id="prevention-strategies">
+                        <div class="strategy">
+                            <h4><span class="strategy-icon"><i class="fas fa-ban"></i></span> Resource Allocation Order</h4>
+                            <p>Impose a total ordering on resource types and require processes to request resources in increasing order of enumeration.</p>
+                        </div>
+                        <div class="strategy">
+                            <h4><span class="strategy-icon"><i class="fas fa-lock"></i></span> All-or-Nothing Allocation</h4>
+                            <p>Require processes to request and be allocated all their resources before execution begins.</p>
+                        </div>
+                        <div class="strategy">
+                            <h4><span class="strategy-icon"><i class="fas fa-hand-paper"></i></span> Resource Preemption</h4>
+                            <p>Allow resources to be forcibly taken from processes and given to others when needed.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Avoidance strategies -->
+                    <div class="strategy-section hidden" id="avoidance-strategies">
+                        <div class="strategy">
+                            <h4><span class="strategy-icon"><i class="fas fa-shield-alt"></i></span> Banker's Algorithm</h4>
+                            <p>Only grant resource requests if the resulting state is safe (all processes can finish).</p>
+                        </div>
+                        <div class="strategy">
+                            <h4><span class="strategy-icon"><i class="fas fa-file-contract"></i></span> Resource Declaration</h4>
+                            <p>Require processes to declare their maximum resource needs in advance.</p>
+                        </div>
+                        <div class="strategy">
+                            <h4><span class="strategy-icon"><i class="fas fa-traffic-light"></i></span> Wait/Die and Wound/Wait</h4>
+                            <p>Use timestamps to determine whether a process should wait or release its resources.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Detection and recovery strategies -->
+                    <div class="strategy-section hidden" id="detection-strategies">
+                        <div class="strategy">
+                            <h4><span class="strategy-icon"><i class="fas fa-user-times"></i></span> Process Termination</h4>
+                            <p>Terminate one or more processes involved in the deadlock to break it:</p>
+                            <ul class="ml-8 mt-2 list-disc">
+                                <li>Terminate all deadlocked processes</li>
+                                <li>Terminate processes one by one until deadlock is resolved</li>
+                                <li>Select victims based on priority, completion time, or resource usage</li>
+                            </ul>
+                        </div>
+                        <div class="strategy">
+                            <h4><span class="strategy-icon"><i class="fas fa-undo"></i></span> Resource Preemption</h4>
+                            <p>Forcibly take resources from processes to break the deadlock cycle:</p>
+                            <ul class="ml-8 mt-2 list-disc">
+                                <li>Select resources to preempt from specific processes</li>
+                                <li>Return preempted resources to their original owners when possible</li>
+                                <li>Use rollback to restore process to safe state</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+
+ // Theme toggle functionality
+ document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            document.body.classList.toggle('light-mode');
+            
+            const icon = this.querySelector('i');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        });
+
+        document.getElementById('create-matrices').addEventListener('click', function() {
+            const numProcesses = parseInt(document.getElementById('num-processes').value);
+            const numResources = parseInt(document.getElementById('num-resources').value);
+            
+            if (numProcesses < 1 || numResources < 1 || numProcesses > 10 || numResources > 10) {
+                alert("Please enter valid numbers between 1 and 10.");
+                return;
+            }
+            
+            createMatrices(numProcesses, numResources);
+            document.getElementById('matrices-container').classList.remove('hidden');
+            document.getElementById('results-container').classList.add('hidden');
+        });
+        
+        document.getElementById('detect-deadlock').addEventListener('click', function() {
+            const numProcesses = parseInt(document.getElementById('num-processes').value);
+            const numResources = parseInt(document.getElementById('num-resources').value);
+            
+            // Get allocation matrix
+            const allocation = [];
+            for (let i = 0; i < numProcesses; i++) {
+                allocation[i] = [];
+                for (let j = 0; j < numResources; j++) {
+                    const value = parseInt(document.getElementById(`allocation-${i}-${j}`).value);
+                    if (isNaN(value) || value < 0) {
+                        alert("Please enter valid non-negative numbers for the Allocation matrix.");
+                        return;
+                    }
+                    allocation[i][j] = value;
+                }
+            }
+            
+            // Get request matrix
+            const request = [];
+            for (let i = 0; i < numProcesses; i++) {
+                request[i] = [];
+                for (let j = 0; j < numResources; j++) {
+                    const value = parseInt(document.getElementById(`request-${i}-${j}`).value);
+                    if (isNaN(value) || value < 0) {
+                        alert("Please enter valid non-negative numbers for the Request matrix.");
+                        return;
+                    }
+                    request[i][j] = value;
+                }
+            }
+            
+            // Get available resources
+            const available = [];
+            for (let j = 0; j < numResources; j++) {
+                const value = parseInt(document.getElementById(`available-${j}`).value);
+                if (isNaN(value) || value < 0) {
+                    alert("Please enter valid non-negative numbers for Available resources.");
+                    return;
+                }
+                available[j] = value;
+            }
+            
+            // Run banker's algorithm for deadlock detection
+            const result = detectDeadlock(allocation, request, available, numProcesses, numResources);
+            displayResults(result, numProcesses);
+            
+            document.getElementById('results-container').classList.remove('hidden');
+        });
+        
+        function createMatrices(numProcesses, numResources) {
+            // Create allocation matrix
+            let allocationTable = '<tr><th>Process</th>';
+            for (let j = 0; j < numResources; j++) {
+                allocationTable += `<th>R${j}</th>`;
+            }
+            allocationTable += '</tr>';
+            
+            for (let i = 0; i < numProcesses; i++) {
+                allocationTable += `<tr><td>P${i}</td>`;
+                for (let j = 0; j < numResources; j++) {
+                    allocationTable += `<td><input type="number" id="allocation-${i}-${j}" min="0" value="0"></td>`;
+                }
+                allocationTable += '</tr>';
+            }
+            document.getElementById('allocation-matrix').innerHTML = allocationTable;
+            
+            // Create request matrix
+            let requestTable = '<tr><th>Process</th>';
+            for (let j = 0; j < numResources; j++) {
+                requestTable += `<th>R${j}</th>`;
+            }
+            requestTable += '</tr>';
+            
+            for (let i = 0; i < numProcesses; i++) {
+                requestTable += `<tr><td>P${i}</td>`;
+                for (let j = 0; j < numResources; j++) {
+                    requestTable += `<td><input type="number" id="request-${i}-${j}" min="0" value="0"></td>`;
+                }
+                requestTable += '</tr>';
+            }
+            document.getElementById('request-matrix').innerHTML = requestTable;
+            
+            // Create available resources
+            let availableTable = '<tr>';
+            for (let j = 0; j < numResources; j++) {
+                availableTable += `<th>R${j}</th>`;
+            }
+            availableTable += '</tr><tr>';
+            
+            for (let j = 0; j < numResources; j++) {
+                availableTable += `<td><input type="number" id="available-${j}" min="0" value="0"></td>`;
+            }
+            availableTable += '</tr>';
+            document.getElementById('available-matrix').innerHTML = availableTable;
+        }
+        
+        function detectDeadlock(allocation, request, available, numProcesses, numResources) {
+            // Copy available resources array
+            const work = [...available];
+            
+            // Initialize finish array
+            const finish = Array(numProcesses).fill(false);
+            
+            // Store execution sequence
+            const sequence = [];
+            
+            // Store steps for visualization
+            const steps = [];
+            
+            let changed = true;
+            
+            while (changed) {
+                changed = false;
+                
+                for (let i = 0; i < numProcesses; i++) {
+                    if (!finish[i]) {
+                        // Check if all resources for this process can be allocated
+                        let canAllocate = true;
+                        for (let j = 0; j < numResources; j++) {
+                            if (request[i][j] > work[j]) {
+                                canAllocate = false;
+                                break;
+                            }
+                        }
+                        
+                        if (canAllocate) {
+                            // Add step info
+                            const stepInfo = {
+                                process: i,
+                                workBefore: [...work],
+                                workAfter: []
+                            };
+                            
+                            // This process can finish
+                            finish[i] = true;
+                            changed = true;
+                            sequence.push(i);
+                            
+                            // Release its resources
+                            for (let j = 0; j < numResources; j++) {
+                                work[j] += allocation[i][j];
+                            }
+                            
+                            stepInfo.workAfter = [...work];
+                            steps.push(stepInfo);
+                        }
+                    }
+                }
+            }
+            
+            // Check if deadlock exists
+            const deadlockProcesses = [];
+            for (let i = 0; i < numProcesses; i++) {
+                if (!finish[i]) {
+                    deadlockProcesses.push(i);
+                }
+            }
+            
+            return {
+                safe: deadlockProcesses.length === 0,
+                sequence: sequence,
+                deadlockProcesses: deadlockProcesses,
+                steps: steps
+            };
+        }
+        
+        function displayResults(result, numProcesses) {
+            const resultDiv = document.getElementById('deadlock-result');
+            const stepsDiv = document.getElementById('execution-steps');
+            
+            if (result.safe) {
+                resultDiv.innerHTML = '<div class="result safe">' +
+                    '<h3>✅ No Deadlock Detected!</h3>' +
+                    '<p>The system is in a safe state. All processes can complete.</p>' +
+                    '<div class="sequence">Safe Sequence: ' +
+                    result.sequence.map(p => `<span class="process-id">P${p}</span>`).join(' → ') +
+                    '</div></div>';
+            } else {
+                resultDiv.innerHTML = '<div class="result deadlock">' +
+                    '<h3>⚠️ Deadlock Detected!</h3>' +
+                    '<p>The following processes are in deadlock:</p>' +
+                    '<div class="sequence">' +
+                    result.deadlockProcesses.map(p => `<span class="process-id">P${p}</span>`).join(' ') +
+                    '</div></div>';
+            }
+            
+            // Display execution steps
+            let stepsHTML = '<h3>Execution Steps:</h3>';
+            
+            if (result.steps.length > 0) {
+                result.steps.forEach((step, index) => {
+                    stepsHTML += `<div class="step">
+                        <strong>Step ${index + 1}:</strong> Process P${step.process} can finish
+                        <p>Available resources before: [${step.workBefore.join(', ')}]</p>
+                        <p>Resources released: [${step.process}]</p>
+                        <p>Available resources after: [${step.workAfter.join(', ')}]</p>
+                    </div>`;
+                });
+            } else {
+                stepsHTML += '<p>No processes could complete with the given resource allocation.</p>';
+            }
+            
+            stepsDiv.innerHTML = stepsHTML;
+        }
+        document.getElementById('start-btn').addEventListener('click', function() {
+            document.getElementById('detection-section').classList.remove('hidden');
+        });
+
+        document.querySelectorAll('.nav-pill').forEach(pill => {
+            pill.addEventListener('click', function() {
+                // Remove active class from all pills
+                document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+                
+                // Add active class to clicked pill
+                this.classList.add('active');
+                
+                // Hide all strategy sections
+                document.querySelectorAll('.strategy-section').forEach(section => section.classList.add('hidden'));
+                
+                // Show the selected strategy section
+                const strategy = this.getAttribute('data-strategy');
+                document.getElementById(`${strategy}-strategies`).classList.remove('hidden');
+            });
+        });
+        
+        document.getElementById('create-matrices').addEventListener('click', function() {
+            const numProcesses = parseInt(document.getElementById('num-processes').value);
+            const numResources = parseInt(document.getElementById('num-resources').value);
+            
+            if (numProcesses < 1 || numResources < 1 || numProcesses > 10 || numResources > 10) {
+                alert("Please enter valid numbers between 1 and 10.");
+                return;
+            }
+            
+            createMatrices(numProcesses, numResources);
+            
+            // Add animation to the matrices container
+            const matricesContainer = document.getElementById('matrices-container');
+            matricesContainer.classList.remove('hidden');
+            matricesContainer.style.animation = 'fadeInUp 0.8s ease-out';
+            
+            document.getElementById('results-container').classList.add('hidden');
+        });
+        
+        document.getElementById('detect-deadlock').addEventListener('click', function() {
+            // Show loading animation
+            this.innerHTML = '<span class="loading"></span> Analyzing...';
+            this.disabled = true;
+            
+            setTimeout(() => {
+                const numProcesses = parseInt(document.getElementById('num-processes').value);
+                const numResources = parseInt(document.getElementById('num-resources').value);
+                
+                // Get allocation matrix
+                const allocation = [];
+                for (let i = 0; i < numProcesses; i++) {
+                    allocation[i] = [];
+                    for (let j = 0; j < numResources; j++) {
+                        const value = parseInt(document.getElementById(`allocation-${i}-${j}`).value);
+                        if (isNaN(value) || value < 0) {
+                            alert("Please enter valid non-negative numbers for the Allocation matrix.");
+                            resetButton();
+                            return;
+                        }
+                        allocation[i][j] = value;
+                    }
+                }
+                
+                // Get request matrix
+                const request = [];
+                for (let i = 0; i < numProcesses; i++) {
+                    request[i] = [];
+                    for (let j = 0; j < numResources; j++) {
+                        const value = parseInt(document.getElementById(`request-${i}-${j}`).value);
+                        if (isNaN(value) || value < 0) {
+                            alert("Please enter valid non-negative numbers for the Request matrix.");
+                            resetButton();
+                            return;
+                        }
+                        request[i][j] = value;
+                    }
+                }
+                
+                // Get available resources
+                const available = [];
+                for (let j = 0; j < numResources; j++) {
+                    const value = parseInt(document.getElementById(`available-${j}`).value);
+                    if (isNaN(value) || value < 0) {
+                        alert("Please enter valid non-negative numbers for Available resources.");
+                        resetButton();
+                        return;
+                    }
+                    available[j] = value;
+                }
+                
+                // Run banker's algorithm for deadlock detection
+                const result = detectDeadlock(allocation, request, available, numProcesses, numResources);
+                displayResults(result, numProcesses);
+                
+                // Show resolution strategies if deadlock detected
+                if (!result.safe) {
+                    document.getElementById('deadlock-resolution').classList.remove('hidden');
+                } else {
+                    document.getElementById('deadlock-resolution').classList.add('hidden');
+                }
+                
+                // Reset button
+                resetButton();
+                
+                // Animate the results container
+                const resultsContainer = document.getElementById('results-container');
+                resultsContainer.classList.remove('hidden');
+                resultsContainer.style.animation = 'fadeInUp 0.8s ease-out';
+                
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 1000); // Simulate calculation time
+            
+            function resetButton() {
+                const button = document.getElementById('detect-deadlock');
+                button.innerHTML = '<i class="fas fa-search mr-2"></i> Detect Deadlock';
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
