@@ -608,8 +608,8 @@
                 </div>
                 
                 <div>
-                    <h3 class="text-xl font-semibold mb-2">Request Matrix</h3>
-                    <p class="mb-4">Enter the number of instances of each resource type that each process may still request.</p>
+                    <h3 class="text-xl font-semibold mb-2">Maximum-Matrix</h3>
+                    <p class="mb-4">Enter the number of instances of each resource type  each process may need in total.</p>
                     <div class="matrix-container">
                         <table id="request-matrix"></table>
                     </div>
@@ -628,31 +628,8 @@
                 </button>
             </div>
             
-            <!-- <div class="w-full md:w-1/3">
-                <div class="sidebar">
-                    <h3 class="mb-4">Resource Management Tips</h3>
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fas fa-info-circle"></i></div>
-                        <h4>Allocation Matrix</h4>
-                        <p>Shows resources currently held by each process</p>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fas fa-question-circle"></i></div>
-                        <h4>Request Matrix</h4>
-                        <p>Shows resources that may be requested in the future</p>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-icon"><i class="fas fa-check-circle"></i></div>
-                        <h4>Available Resources</h4>
-                        <p>Shows free resources that can be allocated</p>
-                    </div>
-                    <div>
-                        <img src="\deadlock_DM\assets\img.png" alt="Resource Management" class="w-full rounded-lg shadow-lg">
-                    </div>
-                </div> -->
             </div>
         </div>
-    <!-- </div> -->
 
     <div id="results-container" class="container hidden">
         <h2 class="section-title">Analysis Results</h2>
@@ -777,14 +754,14 @@
                 }
             }
             
-            // Get request matrix
+            // Get maximum-matrix
             const request = [];
             for (let i = 0; i < numProcesses; i++) {
                 request[i] = [];
                 for (let j = 0; j < numResources; j++) {
                     const value = parseInt(document.getElementById(`request-${i}-${j}`).value);
                     if (isNaN(value) || value < 0) {
-                        alert("Please enter valid non-negative numbers for the Request matrix.");
+                        alert("Please enter valid non-negative numbers for the maximum-matrix.");
                         return;
                     }
                     request[i][j] = value;
@@ -809,161 +786,6 @@
             document.getElementById('results-container').classList.remove('hidden');
         });
         
-        function createMatrices(numProcesses, numResources) {
-            // Create allocation matrix
-            let allocationTable = '<tr><th>Process</th>';
-            for (let j = 0; j < numResources; j++) {
-                allocationTable += `<th>R${j}</th>`;
-            }
-            allocationTable += '</tr>';
-            
-            for (let i = 0; i < numProcesses; i++) {
-                allocationTable += `<tr><td>P${i}</td>`;
-                for (let j = 0; j < numResources; j++) {
-                    allocationTable += `<td><input type="number" id="allocation-${i}-${j}" min="0" value="0"></td>`;
-                }
-                allocationTable += '</tr>';
-            }
-            document.getElementById('allocation-matrix').innerHTML = allocationTable;
-            
-            // Create request matrix
-            let requestTable = '<tr><th>Process</th>';
-            for (let j = 0; j < numResources; j++) {
-                requestTable += `<th>R${j}</th>`;
-            }
-            requestTable += '</tr>';
-            
-            for (let i = 0; i < numProcesses; i++) {
-                requestTable += `<tr><td>P${i}</td>`;
-                for (let j = 0; j < numResources; j++) {
-                    requestTable += `<td><input type="number" id="request-${i}-${j}" min="0" value="0"></td>`;
-                }
-                requestTable += '</tr>';
-            }
-            document.getElementById('request-matrix').innerHTML = requestTable;
-            
-            // Create available resources
-            let availableTable = '<tr>';
-            for (let j = 0; j < numResources; j++) {
-                availableTable += `<th>R${j}</th>`;
-            }
-            availableTable += '</tr><tr>';
-            
-            for (let j = 0; j < numResources; j++) {
-                availableTable += `<td><input type="number" id="available-${j}" min="0" value="0"></td>`;
-            }
-            availableTable += '</tr>';
-            document.getElementById('available-matrix').innerHTML = availableTable;
-        }
-        
-        function detectDeadlock(allocation, request, available, numProcesses, numResources) {
-            // Copy available resources array
-            const work = [...available];
-            
-            // Initialize finish array
-            const finish = Array(numProcesses).fill(false);
-            
-            // Store execution sequence
-            const sequence = [];
-            
-            // Store steps for visualization
-            const steps = [];
-            
-            let changed = true;
-            
-            while (changed) {
-                changed = false;
-                
-                for (let i = 0; i < numProcesses; i++) {
-                    if (!finish[i]) {
-                        // Check if all resources for this process can be allocated
-                        let canAllocate = true;
-                        for (let j = 0; j < numResources; j++) {
-                            if (request[i][j] > work[j]) {
-                                canAllocate = false;
-                                break;
-                            }
-                        }
-                        
-                        if (canAllocate) {
-                            // Add step info
-                            const stepInfo = {
-                                process: i,
-                                workBefore: [...work],
-                                workAfter: []
-                            };
-                            
-                            // This process can finish
-                            finish[i] = true;
-                            changed = true;
-                            sequence.push(i);
-                            
-                            // Release its resources
-                            for (let j = 0; j < numResources; j++) {
-                                work[j] += allocation[i][j];
-                            }
-                            
-                            stepInfo.workAfter = [...work];
-                            steps.push(stepInfo);
-                        }
-                    }
-                }
-            }
-            
-            // Check if deadlock exists
-            const deadlockProcesses = [];
-            for (let i = 0; i < numProcesses; i++) {
-                if (!finish[i]) {
-                    deadlockProcesses.push(i);
-                }
-            }
-            
-            return {
-                safe: deadlockProcesses.length === 0,
-                sequence: sequence,
-                deadlockProcesses: deadlockProcesses,
-                steps: steps
-            };
-        }
-        
-        function displayResults(result, numProcesses) {
-            const resultDiv = document.getElementById('deadlock-result');
-            const stepsDiv = document.getElementById('execution-steps');
-            
-            if (result.safe) {
-                resultDiv.innerHTML = '<div class="result safe">' +
-                    '<h3>✅ No Deadlock Detected!</h3>' +
-                    '<p>The system is in a safe state. All processes can complete.</p>' +
-                    '<div class="sequence">Safe Sequence: ' +
-                    result.sequence.map(p => `<span class="process-id">P${p}</span>`).join(' → ') +
-                    '</div></div>';
-            } else {
-                resultDiv.innerHTML = '<div class="result deadlock">' +
-                    '<h3>⚠️ Deadlock Detected!</h3>' +
-                    '<p>The following processes are in deadlock:</p>' +
-                    '<div class="sequence">' +
-                    result.deadlockProcesses.map(p => `<span class="process-id">P${p}</span>`).join(' ') +
-                    '</div></div>';
-            }
-            
-            // Display execution steps
-            let stepsHTML = '<h3>Execution Steps:</h3>';
-            
-            if (result.steps.length > 0) {
-                result.steps.forEach((step, index) => {
-                    stepsHTML += `<div class="step">
-                        <strong>Step ${index + 1}:</strong> Process P${step.process} can finish
-                        <p>Available resources before: [${step.workBefore.join(', ')}]</p>
-                        <p>Resources released: [${step.process}]</p>
-                        <p>Available resources after: [${step.workAfter.join(', ')}]</p>
-                    </div>`;
-                });
-            } else {
-                stepsHTML += '<p>No processes could complete with the given resource allocation.</p>';
-            }
-            
-            stepsDiv.innerHTML = stepsHTML;
-        }
         document.getElementById('start-btn').addEventListener('click', function() {
             document.getElementById('detection-section').classList.remove('hidden');
         });
@@ -994,7 +816,7 @@
                 return;
             }
             
-            createMatrices(numProcesses, numResources);
+            // createMatrices(numProcesses, numResources);
             
             // Add animation to the matrices container
             const matricesContainer = document.getElementById('matrices-container');
@@ -1004,86 +826,223 @@
             document.getElementById('results-container').classList.add('hidden');
         });
         
-        document.getElementById('detect-deadlock').addEventListener('click', function() {
-            // Show loading animation
-            this.innerHTML = '<span class="loading"></span> Analyzing...';
-            this.disabled = true;
-            
-            setTimeout(() => {
-                const numProcesses = parseInt(document.getElementById('num-processes').value);
-                const numResources = parseInt(document.getElementById('num-resources').value);
-                
-                // Get allocation matrix
-                const allocation = [];
-                for (let i = 0; i < numProcesses; i++) {
-                    allocation[i] = [];
-                    for (let j = 0; j < numResources; j++) {
-                        const value = parseInt(document.getElementById(`allocation-${i}-${j}`).value);
-                        if (isNaN(value) || value < 0) {
-                            alert("Please enter valid non-negative numbers for the Allocation matrix.");
-                            resetButton();
-                            return;
-                        }
-                        allocation[i][j] = value;
-                    }
-                }
-                
-                // Get request matrix
-                const request = [];
-                for (let i = 0; i < numProcesses; i++) {
-                    request[i] = [];
-                    for (let j = 0; j < numResources; j++) {
-                        const value = parseInt(document.getElementById(`request-${i}-${j}`).value);
-                        if (isNaN(value) || value < 0) {
-                            alert("Please enter valid non-negative numbers for the Request matrix.");
-                            resetButton();
-                            return;
-                        }
-                        request[i][j] = value;
-                    }
-                }
-                
-                // Get available resources
-                const available = [];
+
+    function createMatrices(numProcesses, numResources) {
+    // Allocation matrix
+    let allocationTable = '<tr><th>Process</th>';
+    for (let j = 0; j < numResources; j++) {
+        allocationTable += `<th>R${j}</th>`;
+    }
+    allocationTable += '</tr>';
+
+    for (let i = 0; i < numProcesses; i++) {
+        allocationTable += `<tr><td>P${i}</td>`;
+        for (let j = 0; j < numResources; j++) {
+            allocationTable += `<td><input type="number" id="allocation-${i}-${j}" min="0" value="0"></td>`;
+        }
+        allocationTable += '</tr>';
+    }
+    document.getElementById('allocation-matrix').innerHTML = allocationTable;
+
+    // Maximum matrix
+    let maximumTable = '<tr><th>Process</th>';
+    for (let j = 0; j < numResources; j++) {
+        maximumTable += `<th>R${j}</th>`;
+    }
+    maximumTable += '</tr>';
+
+    for (let i = 0; i < numProcesses; i++) {
+        maximumTable += `<tr><td>P${i}</td>`;
+        for (let j = 0; j < numResources; j++) {
+            maximumTable += `<td><input type="number" id="maximum-${i}-${j}" min="0" value="0"></td>`;
+        }
+        maximumTable += '</tr>';
+    }
+    document.getElementById('request-matrix').innerHTML = maximumTable;
+
+    // Available resources
+    let availableTable = '<tr>';
+    for (let j = 0; j < numResources; j++) {
+        availableTable += `<th>R${j}</th>`;
+    }
+    availableTable += '</tr><tr>';
+
+    for (let j = 0; j < numResources; j++) {
+        availableTable += `<td><input type="number" id="available-${j}" min="0" value="0"></td>`;
+    }
+    availableTable += '</tr>';
+    document.getElementById('available-matrix').innerHTML = availableTable;
+}
+
+function detectDeadlock(allocation, maximum, available, numProcesses, numResources) {
+    // Calculate need matrix: Need = Maximum - Allocation
+    const need = [];
+    for (let i = 0; i < numProcesses; i++) {
+        need[i] = [];
+        for (let j = 0; j < numResources; j++) {
+            need[i][j] = maximum[i][j] - allocation[i][j];
+        }
+    }
+
+    const work = [...available];
+    const finish = Array(numProcesses).fill(false);
+    const sequence = [];
+    const steps = [];
+
+    let changed = true;
+
+    while (changed) {
+        changed = false;
+        for (let i = 0; i < numProcesses; i++) {
+            if (!finish[i]) {
+                let canFinish = true;
                 for (let j = 0; j < numResources; j++) {
-                    const value = parseInt(document.getElementById(`available-${j}`).value);
-                    if (isNaN(value) || value < 0) {
-                        alert("Please enter valid non-negative numbers for Available resources.");
-                        resetButton();
-                        return;
+                    if (need[i][j] > work[j]) {
+                        canFinish = false;
+                        break;
                     }
-                    available[j] = value;
                 }
-                
-                // Run banker's algorithm for deadlock detection
-                const result = detectDeadlock(allocation, request, available, numProcesses, numResources);
-                displayResults(result, numProcesses);
-                
-                // Show resolution strategies if deadlock detected
-                if (!result.safe) {
-                    document.getElementById('deadlock-resolution').classList.remove('hidden');
-                } else {
-                    document.getElementById('deadlock-resolution').classList.add('hidden');
+
+                if (canFinish) {
+                    const stepInfo = {
+                        process: i,
+                        workBefore: [...work],
+                        workAfter: []
+                    };
+
+                    finish[i] = true;
+                    changed = true;
+                    sequence.push(i);
+
+                    for (let j = 0; j < numResources; j++) {
+                        work[j] += allocation[i][j];
+                    }
+
+                    stepInfo.workAfter = [...work];
+                    steps.push(stepInfo);
                 }
-                
-                // Reset button
-                resetButton();
-                
-                // Animate the results container
-                const resultsContainer = document.getElementById('results-container');
-                resultsContainer.classList.remove('hidden');
-                resultsContainer.style.animation = 'fadeInUp 0.8s ease-out';
-                
-                // Scroll to results
-                resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 1000); // Simulate calculation time
-            
-            function resetButton() {
-                const button = document.getElementById('detect-deadlock');
-                button.innerHTML = '<i class="fas fa-search mr-2"></i> Detect Deadlock';
-                button.disabled = false;
             }
+        }
+    }
+
+    const deadlockProcesses = [];
+    for (let i = 0; i < numProcesses; i++) {
+        if (!finish[i]) {
+            deadlockProcesses.push(i);
+        }
+    }
+
+    return {
+        safe: deadlockProcesses.length === 0,
+        sequence: sequence,
+        deadlockProcesses: deadlockProcesses,
+        steps: steps,
+        allocation: allocation
+    };
+}
+
+function displayResults(result, numProcesses) {
+    const resultDiv = document.getElementById('deadlock-result');
+    const stepsDiv = document.getElementById('execution-steps');
+
+    if (result.safe) {
+        resultDiv.innerHTML = '<div class="result safe">' +
+            '<h3>✅ No Deadlock Detected!</h3>' +
+            '<p>The system is in a safe state. All processes can complete.</p>' +
+            '<div class="sequence">Safe Sequence: ' +
+            result.sequence.map(p => `<span class="process-id">P${p}</span>`).join(' → ') +
+            '</div></div>';
+    } else {
+        resultDiv.innerHTML = '<div class="result deadlock">' +
+            '<h3>⚠️ Deadlock Detected!</h3>' +
+            '<p>The following processes are in deadlock:</p>' +
+            '<div class="sequence">' +
+            result.deadlockProcesses.map(p => `<span class="process-id">P${p}</span>`).join(' ') +
+            '</div></div>';
+    }
+
+    // Execution steps
+    let stepsHTML = '<h3>Execution Steps:</h3>';
+    if (result.steps.length > 0) {
+        result.steps.forEach((step, index) => {
+            stepsHTML += `<div class="step">
+                <strong>Step ${index + 1}:</strong> Process P${step.process} can finish
+                <p>Available resources before: [${step.workBefore.join(', ')}]</p>
+                <p>Resources released: [${result.allocation[step.process].join(', ')}]</p>
+                <p>Available resources after: [${step.workAfter.join(', ')}]</p>
+            </div>`;
         });
+    } else {
+        stepsHTML += '<p>No processes could complete with the given resource allocation.</p>';
+    }
+
+    stepsDiv.innerHTML = stepsHTML;
+}
+
+// Updated "Detect Deadlock" click event
+document.getElementById('detect-deadlock').addEventListener('click', function () {
+    this.innerHTML = '<span class="loading"></span> Analyzing...';
+    this.disabled = true;
+
+    setTimeout(() => {
+        const numProcesses = parseInt(document.getElementById('num-processes').value);
+        const numResources = parseInt(document.getElementById('num-resources').value);
+
+        const allocation = [];
+        const maximum = [];
+        const available = [];
+
+        for (let i = 0; i < numProcesses; i++) {
+            allocation[i] = [];
+            maximum[i] = [];
+            for (let j = 0; j < numResources; j++) {
+                const allocVal = parseInt(document.getElementById(`allocation-${i}-${j}`).value);
+                const maxVal = parseInt(document.getElementById(`maximum-${i}-${j}`).value);
+                if (isNaN(allocVal) || allocVal < 0 || isNaN(maxVal) || maxVal < 0 || maxVal < allocVal) {
+                    alert("Please enter valid non-negative numbers for Allocation and Maximum matrix. Maximum should be >= Allocation.");
+                    resetButton();
+                    return;
+                }
+                allocation[i][j] = allocVal;
+                maximum[i][j] = maxVal;
+            }
+        }
+
+        for (let j = 0; j < numResources; j++) {
+            const value = parseInt(document.getElementById(`available-${j}`).value);
+            if (isNaN(value) || value < 0) {
+                alert("Please enter valid non-negative numbers for Available resources.");
+                resetButton();
+                return;
+            }
+            available[j] = value;
+        }
+
+        const result = detectDeadlock(allocation, maximum, available, numProcesses, numResources);
+        displayResults(result, numProcesses);
+
+        if (!result.safe) {
+            document.getElementById('deadlock-resolution').classList.remove('hidden');
+        } else {
+            document.getElementById('deadlock-resolution').classList.add('hidden');
+        }
+
+        const resultsContainer = document.getElementById('results-container');
+        resultsContainer.classList.remove('hidden');
+        resultsContainer.style.animation = 'fadeInUp 0.8s ease-out';
+        // scroll to result
+        resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        resetButton();
+    }, 1000);
+
+    function resetButton() {
+        const button = document.getElementById('detect-deadlock');
+        button.innerHTML = '<i class="fas fa-search mr-2"></i> Detect Deadlock';
+        button.disabled = false;
+    }
+});
+
     </script>
 </body>
 </html>
