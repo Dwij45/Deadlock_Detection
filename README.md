@@ -11,8 +11,8 @@ This project is a web-based system to simulate and detect potential **deadlocks 
   - Available resources
   - Maximum need
   - Allocated resources
+    
 - 📊 Displays:
-  - Need matrix
   - Safe sequence (if exists)
   - Deadlock warning (if unsafe)
 - 🧠 Implements the **Banker's Algorithm** logic step-by-step
